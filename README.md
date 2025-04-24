@@ -40,9 +40,9 @@ python train.py
 ```
 
 ### Evaluate the model
+you  can download the model from here: https://www.kaggle.com/models/mahabualahiatik/dr-hybrid-efficientnet-resnet-model-with-ca
 ```bash
 
-you  can download the model from here: https://www.kaggle.com/models/mahabualahiatik/dr-hybrid-efficientnet-resnet-model-with-ca
 python evaluate.py
 ```
 
