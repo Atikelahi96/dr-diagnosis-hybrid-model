@@ -47,7 +47,7 @@ python evaluate.py
 ## 📦 Files
 - `train.py` – Training pipeline.
 - `evaluate.py` – Evaluation script.
-- `dataset.py - image dataset loader.
+- `dataset.py - Custom PyTorch Dataset.
 - `model.py` – Hybrid model with Coordinate Attention.
 - `config.py` – Configurations for training.
 - `requirements.txt` – Required libraries.
