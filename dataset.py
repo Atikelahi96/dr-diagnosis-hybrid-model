@@ -1,28 +1,31 @@
 # dataset.py
 
-import pandas as pd
+import os
+import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
-import torchvision.transforms as transforms
 
-class DRDataset(Dataset):
-    def __init__(self, csv_file, image_root, transform=None):
-        self.data = pd.read_csv(csv_file)
-        self.image_root = image_root
-        self.transform = transform if transform else transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor()
-        ])
+distclass RetinaDataset(Dataset):
+    def __init__(self, root_dir, transform=None, image_size=(448,448)):
+        self.root_dir    = root_dir
+        self.transform   = transform
+        self.image_size  = image_size
+        self.classes     = sorted(os.listdir(root_dir))
+        self.samples = []
+        for idx, cls in enumerate(self.classes):
+            p = os.path.join(root_dir, cls)
+            for fname in os.listdir(p):
+                self.samples.append((os.path.join(p,fname), idx))
 
     def __len__(self):
-        return len(self.data)
+        return len(self.samples)
 
     def __getitem__(self, idx):
-        img_path = f"{self.image_root}/{self.data.iloc[idx]['image']}"
-        image = Image.open(img_path).convert("RGB")
-        label = int(self.data.iloc[idx]['level'])
-
+        path, label = self.samples[idx]
+        img = Image.open(path).convert("RGB").resize(self.image_size)
+        img = np.array(img)
         if self.transform:
-            image = self.transform(image)
-
-        return image, label
+            img = self.transform(image=img)["image"]
+        if isinstance(img, np.ndarray):
+            img = torch.tensor(img, dtype=torch.float32).permute(2,0,1)
+        return img, label
