@@ -1,32 +1,30 @@
 # evaluate.py
 
+import matplotlib.pyplot as plt
+import seaborn as sns
 import torch
 from torch.utils.data import DataLoader
-from config import CONFIG
-from model import build_model
-from dataset import DRDataset
-
-def evaluate():
-    device = torch.device(CONFIG["device"])
-    model = build_model(CONFIG["model_name"], CONFIG["num_classes"]).to(device)
-    model.load_state_dict(torch.load(f"{CONFIG['checkpoint_dir']}/model_epoch_25.pth")["model_state_dict"])
-    model.eval()
-
-    val_dataset = DRDataset(CONFIG["val_csv"], CONFIG["image_root"])
-    val_loader = DataLoader(val_dataset, batch_size=CONFIG["batch_size"], shuffle=False)
-
-    correct = 0
-    total = 0
-
-    with torch.no_grad():
-        for images, labels in val_loader:
-            images, labels = images.to(device), labels.to(device)
-            outputs = model(images)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-
-    print(f'Validation Accuracy: {100 * correct / total:.2f}%')
+from sklearn.metrics import classification_report, confusion_matrix
+from config import *
+from model import HybridModel
+from dataset import RetinaDataset
+from utils import get_transforms
 
 if __name__ == "__main__":
-    evaluate()
+    model = HybridModel().to(DEVICE)
+    model.load_state_dict(torch.load('best_hybrid.pth'))
+    model.eval()
+    _, test_tf = get_transforms()
+    test_ds = RetinaDataset(TEST_PATH, test_tf)
+    test_loader = DataLoader(test_ds, BATCH_SIZE)
+    all_preds, all_labels = [], []
+    with torch.no_grad():
+        for imgs, labels in test_loader:
+            outs = model(imgs.to(DEVICE))
+            preds = outs.argmax(dim=1).cpu()
+            all_preds.extend(preds.numpy())
+            all_labels.extend(labels.numpy())
+    print(classification_report(all_labels, all_preds))
+    cm = confusion_matrix(all_labels, all_preds)
+    sns.heatmap(cm, annot=True, fmt='d')
+    plt.savefig('confusion.png')
