@@ -1,4 +1,4 @@
-#train.py
+# train.py
 from torch import optim, nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -7,7 +7,7 @@ from config import *
 from model import HybridModel
 from dataset import RetinaDataset
 from utils import get_transforms
-from sklearn.metrics import cohen_kappa_score
+
 
 
 def train_model():
