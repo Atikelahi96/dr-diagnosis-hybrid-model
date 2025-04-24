@@ -4,7 +4,7 @@ This repository contains a deep learning model for diagnosing diabetic retinopat
 It combines the strengths of **EfficientNet** and **ResNet** backbones along with **Coordinate Attention** to improve feature representation.
 
 ## 🧠 Model Architecture
-- EfficientNetB0 + ResNet18 hybrid feature extractor.
+- EfficientNetB0 + ResNet50 hybrid feature extractor.
 - Coordinate Attention module to enhance spatial and channel-wise information.
 - Fully connected classifier to output the DR grade.
 
