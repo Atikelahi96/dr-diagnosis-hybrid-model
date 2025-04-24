@@ -47,7 +47,7 @@ python evaluate.py
 ## 📦 Files
 - `train.py` – Training pipeline.
 - `evaluate.py` – Evaluation script.
-- `dataset_folder.py` – Folder-based image dataset loader.
+- `dataset.py - image dataset loader.
 - `model.py` – Hybrid model with Coordinate Attention.
 - `config.py` – Configurations for training.
 - `requirements.txt` – Required libraries.
