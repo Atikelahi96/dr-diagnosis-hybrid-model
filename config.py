@@ -1,16 +1,20 @@
 # config.py
 
-CONFIG = {
-    "image_size": 224,
-    "batch_size": 32,
-    "num_epochs": 25,
-    "learning_rate": 1e-4,
-    "num_classes": 5,
-    "model_name": "resnet50",
-    "device": "cuda",
-    "train_csv": "path/to/train.csv",
-    "val_csv": "path/to/val.csv",
-    "image_root": "path/to/images/",
-    "log_dir": "./logs",
-    "checkpoint_dir": "./checkpoints"
-}
+import os
+
+# Device
+DEVICE = "cuda" if __import__('torch').cuda.is_available() else "cpu"
+
+# Paths
+TRAIN_PATH = os.getenv('DR_TRAIN_PATH', 'DR_Sorted_Images_train')
+VALID_PATH = os.getenv('DR_VALID_PATH', 'DR_Sorted_Images_val')
+TEST_PATH  = os.getenv('DR_TEST_PATH',  'DR_Sorted_Images_test')
+
+# Hyperparameters
+NUM_CLASSES    = 5
+BATCH_SIZE     = 8
+EPOCHS         = 20
+LEARNING_RATE  = 1e-4
+MOMENTUM       = 0.9
+WEIGHT_DECAY   = 1e-4
+EARLY_STOPPING = 5
