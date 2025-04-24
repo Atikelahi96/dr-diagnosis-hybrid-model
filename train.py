@@ -1,44 +1,45 @@
-# train.py
-
-import torch
-import torch.nn as nn
-import torch.optim as optim
+#train.py
+from torch import optim, nn
 from torch.utils.data import DataLoader
-from config import CONFIG
-from model import build_model
-from dataset import DRDataset
-from utils import set_seed, save_checkpoint
+from tqdm import tqdm
+import torch
+from config import *
+from model import HybridModel
+from dataset import RetinaDataset
+from utils import get_transforms
+from sklearn.metrics import cohen_kappa_score
 
-def train():
-    set_seed()
-    device = torch.device(CONFIG["device"])
-    
-    model = build_model(CONFIG["model_name"], CONFIG["num_classes"]).to(device)
-    train_dataset = DRDataset(CONFIG["train_csv"], CONFIG["image_root"])
-    val_dataset = DRDataset(CONFIG["val_csv"], CONFIG["image_root"])
-    
-    train_loader = DataLoader(train_dataset, batch_size=CONFIG["batch_size"], shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=CONFIG["batch_size"], shuffle=False)
 
+def train_model():
+    train_tf, val_tf = get_transforms()
+    train_ds = RetinaDataset(TRAIN_PATH, train_tf)
+    val_ds   = RetinaDataset(VALID_PATH, val_tf)
+    train_loader = DataLoader(train_ds, BATCH_SIZE, shuffle=True, num_workers=4)
+    val_loader   = DataLoader(val_ds,   BATCH_SIZE, shuffle=False, num_workers=4)
+
+    model = HybridModel().to(DEVICE)
+    optimizer = optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=3, factor=0.5)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=CONFIG["learning_rate"])
 
-    for epoch in range(CONFIG["num_epochs"]):
+    best_kappa, early_stop = -1, 0
+    for epoch in range(1, EPOCHS+1):
         model.train()
-        running_loss = 0.0
-        for images, labels in train_loader:
-            images, labels = images.to(device), labels.to(device)
-
+        total_loss, correct, total = 0, 0, 0
+        for imgs, labels in tqdm(train_loader, desc=f"Epoch {epoch}"):
+            imgs, labels = imgs.to(DEVICE), labels.to(DEVICE)
             optimizer.zero_grad()
-            outputs = model(images)
+            outputs = model(imgs)
             loss = criterion(outputs, labels)
             loss.backward()
+            nn.utils.clip_grad_norm_(model.parameters(), 2.0)
             optimizer.step()
-
-            running_loss += loss.item()
-
-        print(f"Epoch [{epoch+1}/{CONFIG['num_epochs']}], Loss: {running_loss/len(train_loader):.4f}")
-        save_checkpoint(model, optimizer, epoch, f"{CONFIG['checkpoint_dir']}/model_epoch_{epoch+1}.pth")
+            total_loss += loss.item()
+            preds = outputs.argmax(dim=1)
+            correct += (preds==labels).sum().item()
+            total += labels.size(0)
+      
+    return model
 
 if __name__ == "__main__":
-    train()
+    train_model()
